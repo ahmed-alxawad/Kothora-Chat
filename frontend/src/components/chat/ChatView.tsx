@@ -13,18 +13,10 @@ import { createStore, produce } from "solid-js/store"
 import { useApp } from "../../app-context"
 import { ApiError, api, streamMessage } from "../../lib/api"
 import { navigate } from "../../lib/router"
-import { greeting } from "../../lib/time"
 import type { ChatEvent, Focus, Reasoning, ThreadMessage } from "../../lib/types"
-import { Icon, KothoraMark, type IconName } from "../ui/Icon"
+import { Icon } from "../ui/Icon"
 import { Composer } from "./Composer"
 import { AssistantMessage, UserMessage } from "./Messages"
-
-const SUGGESTIONS: { icon: IconName; text: string }[] = [
-  { icon: "globe", text: "Compare bKash and Nagad for sending money" },
-  { icon: "sparkle", text: "How did the Padma Bridge change travel to Dhaka?" },
-  { icon: "pen", text: "Write a Python function to validate a Bangladeshi mobile number" },
-  { icon: "book", text: "বাংলাদেশের রাজধানী কোথায়?" },
-]
 
 /** Within this distance of the bottom, new text keeps the view pinned to the latest line. */
 const STICK_TO_BOTTOM_PX = 96
@@ -235,19 +227,19 @@ export function ChatView(props: {
         <Switch>
           <Match when={isEmpty()}>
             <div class="welcome">
-              <KothoraMark size={44} />
               <h1 class="greeting">
-                <Switch fallback={greeting(app.user()?.name ?? "", new Date())}>
+                <Switch fallback="What would you like to know?">
                   <Match when={app.incognito()}>Incognito chat</Match>
                   <Match when={projectName()}>{projectName()}</Match>
                 </Switch>
               </h1>
-              <p class="welcome-sub">
-                <Switch fallback="Ask in Bangla or English. Every answer shows its sources.">
-                  <Match when={app.incognito()}>This chat will not be saved to your history.</Match>
-                  <Match when={projectName()}>Chats here follow this project's instructions.</Match>
-                </Switch>
-              </p>
+              <Show when={app.incognito() || projectName()}>
+                <p class="welcome-sub">
+                  {app.incognito()
+                    ? "This chat won't be saved to your history."
+                    : "Chats here follow this project's instructions."}
+                </p>
+              </Show>
             </div>
           </Match>
           <Match when={loadError()}>
@@ -330,20 +322,8 @@ export function ChatView(props: {
           onStop={() => abort?.abort()}
           placeholder={isEmpty() ? "Ask anything…" : "Ask a follow-up…"}
         />
-        <Show
-          when={isEmpty()}
-          fallback={<p class="disclaimer">Kothora can make mistakes. Check the cited sources.</p>}
-        >
-          <div class="suggestions">
-            <For each={SUGGESTIONS}>
-              {(suggestion) => (
-                <button type="button" class="suggestion" onClick={() => send(suggestion.text)}>
-                  <Icon name={suggestion.icon} size={16} />
-                  <span>{suggestion.text}</span>
-                </button>
-              )}
-            </For>
-          </div>
+        <Show when={!isEmpty()}>
+          <p class="disclaimer">Kothora can make mistakes. Check the sources.</p>
         </Show>
       </div>
     </section>

@@ -32,14 +32,6 @@ function groupLabel(date: Date, startOfToday: number): string {
   return date.toLocaleDateString("en-US", { month: "long", year: "numeric" })
 }
 
-export function greeting(name: string, now: Date): string {
-  const hour = now.getHours()
-  const firstName = name.trim().split(/\s+/)[0] || "there"
-  if (hour >= 5 && hour < 12) return `Good morning, ${firstName}`
-  if (hour >= 12 && hour < 17) return `Good afternoon, ${firstName}`
-  return `Good evening, ${firstName}`
-}
-
 /** Compact age, as list views show it: "just now", "5m ago", "3h ago", "4d ago", "2mo ago". */
 export function relativeTime(iso: string, now: Date): string {
   const seconds = Math.max(0, (now.getTime() - new Date(iso).getTime()) / 1000)

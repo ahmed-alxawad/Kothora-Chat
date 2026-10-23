@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import type { Conversation } from "./types"
-import { greeting, groupConversations, relativeTime } from "./time"
+import { groupConversations, relativeTime } from "./time"
 
 const NOW = new Date(2026, 9, 23, 15, 0) // 23 Oct 2026, 15:00 local time
 
@@ -32,18 +32,6 @@ describe("groupConversations", () => {
 
   it("returns no groups for no conversations", () => {
     expect(groupConversations([], NOW)).toEqual([])
-  })
-})
-
-describe("greeting", () => {
-  it("uses the time of day and the first name", () => {
-    expect(greeting("Asha Rahman", new Date(2026, 9, 23, 8))).toBe("Good morning, Asha")
-    expect(greeting("Asha", new Date(2026, 9, 23, 14))).toBe("Good afternoon, Asha")
-    expect(greeting("Asha", new Date(2026, 9, 23, 22))).toBe("Good evening, Asha")
-  })
-
-  it("falls back when the name is unknown", () => {
-    expect(greeting("", NOW)).toBe("Good afternoon, there")
   })
 })
 

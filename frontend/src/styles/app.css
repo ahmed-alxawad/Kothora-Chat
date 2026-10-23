@@ -15,14 +15,14 @@
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 10px;
   width: 100%;
-  padding: 8px 10px;
+  padding: 7px 10px;
   border: none;
   border-radius: 10px;
   background: none;
   color: var(--text);
-  font-size: 14.5px;
+  font-size: 14px;
   text-align: left;
 }
 
@@ -190,7 +190,7 @@
 }
 
 .switch.on {
-  background: var(--brand);
+  background: var(--text);
 }
 
 .switch.on::after {
@@ -198,18 +198,18 @@
 }
 
 /* Top bar */
+/* Three columns so the Chat | Code switch stays centered whatever sits beside it. */
+.topbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+}
+
 .topbar-start {
   display: flex;
   gap: 2px;
-  min-width: 80px;
-}
-
-.product-switch {
-  margin: 0 auto;
 }
 
 .topbar-end {
-  min-width: 80px;
   justify-content: flex-end;
 }
 
@@ -639,7 +639,7 @@ select,
 }
 
 .capability-list svg {
-  color: var(--brand);
+  color: var(--text);
   flex: none;
 }
 
@@ -1051,8 +1051,8 @@ select,
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: var(--brand-soft);
-  color: var(--brand);
+  background: var(--surface-2);
+  color: var(--text-2);
 }
 
 .project-name {

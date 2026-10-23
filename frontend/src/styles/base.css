@@ -37,7 +37,8 @@ button:disabled {
 }
 
 a {
-  color: var(--brand);
+  color: inherit;
+  text-underline-offset: 3px;
 }
 
 h1,
@@ -47,7 +48,7 @@ h3 {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--text);
   outline-offset: 2px;
 }
 
@@ -87,14 +88,13 @@ h3 {
 }
 
 .primary {
-  background: var(--brand);
-  color: var(--on-brand);
-  border: 1px solid var(--brand);
+  background: var(--action);
+  color: var(--on-action);
+  border: 1px solid var(--action);
 }
 
 .primary:hover:not(:disabled) {
-  background: var(--brand-hover);
-  border-color: var(--brand-hover);
+  opacity: 0.86;
 }
 
 .secondary {
@@ -140,8 +140,8 @@ h3 {
   border: none;
   background: none;
   padding: 0;
-  color: var(--brand);
-  font-weight: 600;
+  color: inherit;
+  font-weight: 500;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -251,7 +251,7 @@ h3 {
 
 .menu-check {
   margin-left: auto;
-  color: var(--brand);
+  color: var(--text);
   flex: none;
 }
 
@@ -306,7 +306,7 @@ h3 {
 
 .meter > div {
   height: 100%;
-  background: var(--brand);
+  background: var(--text);
   border-radius: inherit;
 }
 

@@ -5,7 +5,7 @@ import { navigate, route } from "../../lib/router"
 import type { Route } from "../../lib/routes"
 import { showToast, toastError } from "../../lib/toast"
 import type { Conversation } from "../../lib/types"
-import { Icon, KothoraMark, type IconName } from "../ui/Icon"
+import { Icon, Wordmark, type IconName } from "../ui/Icon"
 import { Menu } from "../ui/Menu"
 import { AccountMenu } from "./AccountMenu"
 
@@ -13,7 +13,6 @@ const VISIBLE_PROJECTS = 5
 
 const NAV: { label: string; icon: IconName; route: Route }[] = [
   { label: "Library", icon: "library", route: { name: "library" } },
-  { label: "Projects", icon: "folder", route: { name: "projects" } },
   { label: "Automations", icon: "clock", route: { name: "automations" } },
   { label: "Plugins", icon: "plug", route: { name: "plugins", tab: "plugins" } },
 ]
@@ -55,8 +54,7 @@ export function Sidebar(props: { open: boolean; onClose: () => void; onNavigate:
             props.onNavigate()
           }}
         >
-          <KothoraMark size={26} />
-          <span>Kothora</span>
+          <Wordmark />
         </a>
         <div class="sidebar-head-actions">
           <button
@@ -308,7 +306,7 @@ function HistoryItem(props: { conversation: Conversation; active: boolean; onSel
                 setEditing(true)
               }}
             >
-              <Icon name="edit" size={16} /> Rename
+              <Icon name="rename" size={16} /> Rename
             </button>
             <Show when={(app.projects() ?? []).length > 0 && !app.projects.error}>
               <div class="menu-section">

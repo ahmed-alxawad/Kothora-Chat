@@ -1,6 +1,6 @@
 import { createSignal, Show } from "solid-js"
 import { api, setToken } from "../../lib/api"
-import { KothoraMark } from "../ui/Icon"
+import { Wordmark } from "../ui/Icon"
 
 export function AuthView(props: { onSignedIn: () => void }) {
   const [mode, setMode] = createSignal<"login" | "register">("login")
@@ -31,7 +31,7 @@ export function AuthView(props: { onSignedIn: () => void }) {
   return (
     <main class="auth">
       <div class="auth-panel">
-        <KothoraMark size={48} />
+        <Wordmark size="large" />
         <h1>{mode() === "login" ? "Welcome back" : "Create your account"}</h1>
         <p class="auth-sub">Answers you can check, in Bangla or English. Priced in taka.</p>
         <form class="auth-form" onSubmit={submit}>

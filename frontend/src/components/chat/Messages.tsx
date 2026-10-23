@@ -51,9 +51,6 @@ export function AssistantMessage(props: {
         </p>
       </Show>
       <Show when={props.message.content}>
-        <Show when={props.message.sources.length > 0}>
-          <h3 class="section-label">Answer</h3>
-        </Show>
         <Markdown text={props.message.content} sources={props.message.sources} />
       </Show>
       <Show when={!streaming() && props.message.content}>
