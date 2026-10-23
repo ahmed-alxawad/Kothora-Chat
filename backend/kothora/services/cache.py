@@ -14,11 +14,12 @@ class AnswerCache(Protocol):
     async def close(self) -> None: ...
 
 
-def cache_key(query: str, model_access: str, grounded: bool) -> str:
-    """Key on the normalized query and on what the tier may see, so a Basic user
-    never receives an answer produced by a premium model."""
+def cache_key(query: str, model_access: str, search_scope: str) -> str:
+    """Key on the normalized query, on what the tier may see (a Basic user never receives
+    a premium model's answer) and on what the answer was grounded on (web, scholarly,
+    both, or none)."""
     normalized = " ".join(query.lower().split())
-    digest = hashlib.sha256(f"{model_access}|{grounded}|{normalized}".encode()).hexdigest()
+    digest = hashlib.sha256(f"{model_access}|{search_scope}|{normalized}".encode()).hexdigest()
     return f"kothora:answer:{digest}"
 
 

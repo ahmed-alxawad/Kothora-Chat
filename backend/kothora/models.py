@@ -128,7 +128,9 @@ class UsageRecord(Base):
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_id)
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     message_id: Mapped[str | None] = mapped_column(String(32))
-    route: Mapped[str] = mapped_column(String(40))  # cache|local_general|local_code|openrouter
+    # cache|local_general|local_code|openrouter, or reserved (in progress or abandoned)
+    # and failed (not counted).
+    route: Mapped[str] = mapped_column(String(40))
     model: Mapped[str] = mapped_column(String(200))
     category: Mapped[str] = mapped_column(String(20))  # simple|code|complex
     prompt_tokens: Mapped[int] = mapped_column(Integer, default=0)

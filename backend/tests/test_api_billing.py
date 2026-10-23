@@ -153,10 +153,10 @@ def test_verified_student_gets_scholarly_search_and_bibliography(client, network
     assert "@article{jahan2023mobile," in bibtex.text
 
 
-def test_checkout_without_gateway_config_is_503(tmp_path, network):
+def test_checkout_without_gateway_config_is_503(database_url, network):
     settings = Settings(
         env="test",
-        database_url=f"sqlite+aiosqlite:///{tmp_path / 'x.db'}",
+        database_url=database_url,
         jwt_secret="test-secret-that-is-long-enough-for-hs256",
     )
     with TestClient(create_app(settings, httpx.MockTransport(network))) as bare:

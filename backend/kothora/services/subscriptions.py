@@ -54,6 +54,12 @@ async def active_subscription(
     return result.scalar_one_or_none()
 
 
+async def lock_quota(session: AsyncSession, user_id: str) -> None:
+    """Hold the user's row lock until the transaction ends, so quota checks for one user
+    run one at a time. Postgres only; SQLite (development) ignores FOR UPDATE."""
+    await session.execute(select(User.id).where(User.id == user_id).with_for_update())
+
+
 async def usage_summary(session: AsyncSession, user: User, now: datetime) -> UsageSummary:
     subscription = await active_subscription(session, user.id, now)
     plan = PLANS[subscription.plan_id] if subscription else PLANS["free"]

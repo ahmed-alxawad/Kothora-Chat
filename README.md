@@ -70,6 +70,8 @@ npm run dev                                  # http://localhost:5173, proxies /a
 
 ```bash
 cd backend && ruff check . && ruff format --check . && pytest -q
+# against real services, as CI does:
+KOTHORA_TEST_DATABASE_URL=postgresql+asyncpg://… KOTHORA_TEST_REDIS_URL=redis://… pytest -q
 cd frontend && npm run lint && npm test && npm run build
 ```
 
@@ -79,7 +81,8 @@ CI runs the same commands (`.github/workflows/ci.yml`).
 
 `docker compose up -d` after filling in `.env` from `.env.example`. See
 [docs/deployment.md](docs/deployment.md) for TLS, local models, search and
-SSLCommerz setup.
+SSLCommerz setup, and [docs/production-readiness.md](docs/production-readiness.md)
+for what must happen before a public launch.
 
 ## API
 

@@ -1,4 +1,6 @@
+import asyncio
 import json
+import os
 from collections.abc import Callable, Iterator
 
 import httpx
@@ -6,7 +8,13 @@ import pytest
 from fastapi.testclient import TestClient
 
 from kothora.config import Settings
+from kothora.db import Base, make_engine
 from kothora.main import create_app
+
+# Set these to run the suite against real services, as CI does:
+#   KOTHORA_TEST_DATABASE_URL=postgresql+asyncpg://...  KOTHORA_TEST_REDIS_URL=redis://...
+TEST_DATABASE_URL = os.environ.get("KOTHORA_TEST_DATABASE_URL", "")
+TEST_REDIS_URL = os.environ.get("KOTHORA_TEST_REDIS_URL", "")
 
 LOCAL_URL = "http://local.test/v1"
 OPENROUTER_URL = "https://openrouter.test/api/v1"
@@ -75,11 +83,40 @@ def network() -> FakeNetwork:
     return fake
 
 
+async def _reset_database(url: str) -> None:
+    from kothora import models  # noqa: F401  (registers tables)
+
+    engine = make_engine(url)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+    await engine.dispose()
+
+
+async def _flush_redis(url: str) -> None:
+    import redis.asyncio as redis
+
+    client = redis.from_url(url)
+    await client.flushdb()
+    await client.aclose()
+
+
 @pytest.fixture
-def settings(tmp_path) -> Settings:
+def database_url(tmp_path) -> Iterator[str]:
+    if not TEST_DATABASE_URL:
+        yield f"sqlite+aiosqlite:///{tmp_path / 'test.db'}"
+        return
+    asyncio.run(_reset_database(TEST_DATABASE_URL))
+    yield TEST_DATABASE_URL
+
+
+@pytest.fixture
+def settings(database_url) -> Settings:
+    if TEST_REDIS_URL:
+        asyncio.run(_flush_redis(TEST_REDIS_URL))
     return Settings(
         env="test",
-        database_url=f"sqlite+aiosqlite:///{tmp_path / 'test.db'}",
+        database_url=database_url,
+        redis_url=TEST_REDIS_URL,
         jwt_secret="test-secret-that-is-long-enough-for-hs256",
         local_base_url=LOCAL_URL,
         openrouter_base_url=OPENROUTER_URL,

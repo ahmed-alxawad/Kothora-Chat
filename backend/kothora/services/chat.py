@@ -24,12 +24,15 @@ from kothora.services.router import (
     plan_route,
 )
 from kothora.services.search import SearchError, SearchProvider, Source
-from kothora.services.subscriptions import ensure_within_quota, usage_summary
+from kothora.services.subscriptions import ensure_within_quota, lock_quota, usage_summary
 
 logger = logging.getLogger(__name__)
 
 # Older turns are dropped so prompts fit local 8k-token context windows.
 HISTORY_MESSAGES = 10
+# usage_records.route values besides the Route enum.
+RESERVED_ROUTE = "reserved"
+FAILED_ROUTE = "failed"
 TITLE_MAX_CHARS = 60
 
 Event = dict[str, Any]
@@ -59,6 +62,8 @@ class PreparedTurn:
     plan: Plan
     category: QueryCategory
     steps: list[RouteStep]
+    # The query is counted from here on; run_turn releases it only if no answer is produced.
+    reservation_id: str
 
 
 @dataclass
@@ -87,21 +92,54 @@ class ChatService:
         self, session: AsyncSession, user: User, request: TurnRequest
     ) -> PreparedTurn:
         """Checks that can fail before streaming starts, so the API can answer with a
-        proper HTTP status. Raises QuotaExceededError or ModelNotAllowedError."""
-        summary = await usage_summary(session, user, datetime.now(UTC))
-        ensure_within_quota(summary)
-        category = classify_query(request.question)
-        steps = plan_route(
-            category, summary.plan.model_access, self._settings, request.requested_model
-        )
-        if not steps:
-            raise ModelError("No model is configured. Set up a local model or OpenRouter.")
-        return PreparedTurn(summary.plan, category, steps)
+        proper HTTP status, then reserves the query against the quota.
+
+        The check and the reservation share one transaction under a per-user lock, so
+        parallel requests cannot all pass the check. Raises QuotaExceededError,
+        ModelNotAllowedError or ModelError."""
+        try:
+            await lock_quota(session, user.id)
+            summary = await usage_summary(session, user, datetime.now(UTC))
+            ensure_within_quota(summary)
+            category = classify_query(request.question)
+            steps = plan_route(
+                category, summary.plan.model_access, self._settings, request.requested_model
+            )
+            if not steps:
+                raise ModelError("No model is configured. Set up a local model or OpenRouter.")
+            reservation = UsageRecord(
+                user_id=user.id, route=RESERVED_ROUTE, model="", category=category.value
+            )
+            session.add(reservation)
+            await session.commit()
+        except Exception:
+            await session.rollback()  # releases the lock now, not when the session closes
+            raise
+        return PreparedTurn(summary.plan, category, steps, reservation.id)
 
     async def run_turn(
         self,
         session: AsyncSession,
-        user: User,
+        conversation: Conversation,
+        request: TurnRequest,
+        prepared: PreparedTurn,
+    ) -> AsyncIterator[Event]:
+        """Stream one answer. A turn that ends without an answer gives its query back;
+        a stream the client abandons keeps it, since the model has already been paid."""
+        try:
+            async for event in self._answer(session, conversation, request, prepared):
+                yield event
+                if event["type"] == "done":
+                    return
+        except Exception:
+            await session.rollback()
+            await self._release_reservation(session, prepared.reservation_id)
+            raise
+        await self._release_reservation(session, prepared.reservation_id)
+
+    async def _answer(
+        self,
+        session: AsyncSession,
         conversation: Conversation,
         request: TurnRequest,
         prepared: PreparedTurn,
@@ -117,7 +155,7 @@ class ChatService:
         async for notice in self._search(request, plan, sources):
             yield notice
 
-        key = cache_key(request.question, plan.model_access, grounded=bool(sources))
+        key = cache_key(request.question, plan.model_access, _search_scope(sources))
         # Only standalone questions are cached: a follow-up depends on its conversation.
         cacheable = not history and request.requested_model is None
         started = time.monotonic()
@@ -165,19 +203,14 @@ class ChatService:
         conversation.updated_at = datetime.now(UTC)
         session.add(message)
         await session.flush()
-        session.add(
-            UsageRecord(
-                user_id=user.id,
-                message_id=message.id,
-                route=answer.step.route.value,
-                model=answer.step.model,
-                category=category.value,
-                prompt_tokens=answer.usage.prompt_tokens,
-                completion_tokens=answer.usage.completion_tokens,
-                cost_usd=answer.usage.cost_usd,
-                latency_ms=int((time.monotonic() - started) * 1000),
-            )
-        )
+        record = await session.get(UsageRecord, prepared.reservation_id)
+        record.message_id = message.id
+        record.route = answer.step.route.value
+        record.model = answer.step.model
+        record.prompt_tokens = answer.usage.prompt_tokens
+        record.completion_tokens = answer.usage.completion_tokens
+        record.cost_usd = answer.usage.cost_usd
+        record.latency_ms = int((time.monotonic() - started) * 1000)
         await session.commit()
         yield {
             "type": "done",
@@ -238,6 +271,12 @@ class ChatService:
             yield _Answer("".join(parts), step, usage)
             return
 
+    async def _release_reservation(self, session: AsyncSession, reservation_id: str) -> None:
+        record = await session.get(UsageRecord, reservation_id)
+        record.counted = False
+        record.route = FAILED_ROUTE
+        await session.commit()
+
     async def _history(self, session: AsyncSession, conversation_id: str) -> list[dict[str, str]]:
         result = await session.execute(
             select(Message)
@@ -257,6 +296,11 @@ def _meta_event(step: RouteStep, category: QueryCategory, sources: list[Source])
         "category": category.value,
         "sources": [{"n": n, **s.to_dict()} for n, s in enumerate(sources, start=1)],
     }
+
+
+def _search_scope(sources: list[Source]) -> str:
+    """What the answer was grounded on, e.g. "scholarly+web" or "none"."""
+    return "+".join(sorted({source.kind for source in sources})) or "none"
 
 
 def _title_from(question: str) -> str:

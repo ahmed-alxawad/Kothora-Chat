@@ -43,3 +43,7 @@ def test_protected_routes_need_a_valid_token(client):
     assert client.get("/api/auth/me").status_code == 401
     bad = {"Authorization": "Bearer not-a-token"}
     assert client.get("/api/conversations", headers=bad).status_code == 401
+
+
+def test_health_checks_the_database(client):
+    assert client.get("/api/health").json() == {"status": "ok", "database": "ok"}

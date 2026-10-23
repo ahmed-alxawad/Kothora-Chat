@@ -59,3 +59,13 @@ def test_plain_text_export_handles_web_sources_without_authors():
     web = {"title": "Dhaka", "url": "https://example.org"}
     assert to_plain_text([web]) == "(n.d.). Dhaka. https://example.org"
     assert to_plain_text([SCHOLARLY]).startswith("Rahim Uddin, Karim Ahmed. (2024).")
+
+
+def test_cache_key_separates_tiers_and_search_scopes():
+    from kothora.services.cache import cache_key
+
+    base = cache_key("What is bKash?", "standard", "web")
+    assert cache_key("  what is BKASH? ", "standard", "web") == base
+    assert cache_key("What is bKash?", "local", "web") != base
+    assert cache_key("What is bKash?", "standard", "scholarly+web") != base
+    assert cache_key("What is bKash?", "standard", "none") != base

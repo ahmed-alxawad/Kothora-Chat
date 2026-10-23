@@ -122,11 +122,10 @@ async def send_message(
         # The request-scoped session may close before the stream ends, so the stream
         # opens its own.
         async with services.sessionmaker() as stream_session:
-            stream_user = await stream_session.get(User, user.id)
             conversation = await stream_session.get(Conversation, conversation_id)
             try:
                 async for event in services.chat.run_turn(
-                    stream_session, stream_user, conversation, turn, prepared
+                    stream_session, conversation, turn, prepared
                 ):
                     yield _sse(event)
             except Exception:

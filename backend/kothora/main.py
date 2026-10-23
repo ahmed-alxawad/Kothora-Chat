@@ -5,13 +5,15 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 import httpx
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 from kothora.api import account, auth, billing, chat
 from kothora.config import Settings, get_settings
 from kothora.db import create_all, make_engine, make_sessionmaker
-from kothora.deps import AppServices
+from kothora.deps import AppServices, Services
 from kothora.services.cache import make_cache
 from kothora.services.chat import ChatModels, ChatService
 from kothora.services.llm import ChatModelClient
@@ -59,8 +61,16 @@ def create_app(
         app.include_router(module.router)
 
     @app.get("/api/health", tags=["health"])
-    async def health() -> dict[str, str]:
-        return {"status": "ok"}
+    async def health(services: Services) -> dict[str, str]:
+        """Readiness: answers 503 when the database is unreachable, so the load balancer
+        or Compose healthcheck stops sending traffic."""
+        try:
+            async with services.sessionmaker() as session:
+                await session.execute(text("SELECT 1"))
+        except (SQLAlchemyError, OSError) as exc:
+            logger.error("Health check failed: %s", exc)
+            raise HTTPException(503, "Database unavailable") from exc
+        return {"status": "ok", "database": "ok"}
 
     return app
 

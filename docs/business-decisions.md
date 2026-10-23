@@ -52,8 +52,10 @@ These items are out of scope for this first version or blocked on a founder deci
 
 ## Open items that still need the founders (Appendix B)
 
-- What counts as one "query" in an allowance. The code counts one per answered
-  message, including cache hits; a failed answer is not counted.
+- What counts as one "query" in an allowance. The code reserves one when a message
+  is accepted and keeps it for every answer, including cache hits and answers the
+  user stops partway (the model has already been paid). It gives the query back only
+  when no answer could be produced.
 - How OpenRouter credits are bought from Bangladesh (card at a 5.5% fee, or crypto at 5%).
 - VAT treatment of subscription prices. Prices are shown and charged as stated, with no tax added.
 - Whether Bangladeshi students qualify for Google's free AI Plus offer, which
