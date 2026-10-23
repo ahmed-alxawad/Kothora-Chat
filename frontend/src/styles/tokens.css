@@ -1,0 +1,102 @@
+/*
+ * Design tokens. Colors are Kothora's: deep green (brand) with a burnt-orange accent,
+ * from the business document. Neutrals lean slightly green so greys feel related.
+ * Light values sit on :root; dark values apply when the OS asks for dark (unless the
+ * user chose light) or when the user chose dark. Components use tokens only.
+ */
+:root {
+  --font-ui: "Instrument Sans", "Hind Siliguri", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Bricolage Grotesque", "Instrument Sans", "Hind Siliguri", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --bg: #fbfcfb;
+  --sidebar: #f1f4f2;
+  --sidebar-hover: #e6ebe8;
+  --sidebar-active: #dce4e0;
+  --surface: #ffffff;
+  --surface-2: #eff3f1;
+  --surface-3: #e2e9e5;
+  --border: #dbe3df;
+  --border-strong: #c2cdc8;
+  --text: #16201c;
+  --text-2: #3b4843;
+  --muted: #64726c;
+  --brand: #0b5e4f;
+  --brand-hover: #084b3f;
+  --on-brand: #ffffff;
+  --brand-soft: #e0eee9;
+  --accent: #b85a12;
+  --accent-soft: #fbeee2;
+  --danger: #b42318;
+  --danger-soft: #fdecea;
+  --code-bg: #f4f7f5;
+  --scrim: rgb(10 20 16 / 0.42);
+  --shadow: 0 1px 2px rgb(16 32 26 / 0.06), 0 10px 28px rgb(16 32 26 / 0.09);
+  --shadow-small: 0 1px 2px rgb(16 32 26 / 0.1);
+
+  --radius-s: 8px;
+  --radius-m: 12px;
+  --radius-l: 22px;
+  --radius-pill: 999px;
+  --sidebar-width: 272px;
+  --thread-width: 768px;
+  --topbar-height: 54px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121715;
+    --sidebar: #0c100e;
+    --sidebar-hover: #19201d;
+    --sidebar-active: #222b27;
+    --surface: #1a211e;
+    --surface-2: #212a26;
+    --surface-3: #2b3531;
+    --border: #29332f;
+    --border-strong: #3a4742;
+    --text: #e7edea;
+    --text-2: #c0cbc6;
+    --muted: #8e9b96;
+    --brand: #46b293;
+    --brand-hover: #5cc4a6;
+    --on-brand: #052019;
+    --brand-soft: #16362e;
+    --accent: #e9984f;
+    --accent-soft: #3a2919;
+    --danger: #f97066;
+    --danger-soft: #3a1f1c;
+    --code-bg: #0f1412;
+    --scrim: rgb(0 0 0 / 0.55);
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 28px rgb(0 0 0 / 0.4);
+    --shadow-small: 0 1px 2px rgb(0 0 0 / 0.4);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #121715;
+  --sidebar: #0c100e;
+  --sidebar-hover: #19201d;
+  --sidebar-active: #222b27;
+  --surface: #1a211e;
+  --surface-2: #212a26;
+  --surface-3: #2b3531;
+  --border: #29332f;
+  --border-strong: #3a4742;
+  --text: #e7edea;
+  --text-2: #c0cbc6;
+  --muted: #8e9b96;
+  --brand: #46b293;
+  --brand-hover: #5cc4a6;
+  --on-brand: #052019;
+  --brand-soft: #16362e;
+  --accent: #e9984f;
+  --accent-soft: #3a2919;
+  --danger: #f97066;
+  --danger-soft: #3a1f1c;
+  --code-bg: #0f1412;
+  --scrim: rgb(0 0 0 / 0.55);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 28px rgb(0 0 0 / 0.4);
+  --shadow-small: 0 1px 2px rgb(0 0 0 / 0.4);
+  color-scheme: dark;
+}

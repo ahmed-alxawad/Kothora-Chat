@@ -10,7 +10,9 @@
     "test": "vitest run",
     "preview": "vite preview",
     "format": "prettier --write src",
-    "lint": "prettier --check src"
+    "lint": "prettier --check src",
+    "build:demo": "tsc --noEmit && node scripts/build-demo.mjs",
+    "export-plans": "cd .. && backend/.venv/bin/python frontend/scripts/export-plans.py"
   },
   "dependencies": {
     "solid-js": "^1.9.0"

@@ -1,0 +1,226 @@
+[
+  {
+    "id": "free",
+    "name": "Free",
+    "audience": "Anyone trying Kothora",
+    "features": ["Cited answers", "Local model"],
+    "monthly_bdt": 0,
+    "monthly_queries": 15,
+    "daily_queries": 5,
+    "per_seat": false,
+    "min_seats": 1,
+    "requires_verification": false,
+    "purchasable": false,
+    "prices": []
+  },
+  {
+    "id": "basic",
+    "name": "Basic",
+    "audience": "Students, light users",
+    "features": ["50 queries per month", "Llama 3 8B running locally", "Email support"],
+    "monthly_bdt": 800,
+    "monthly_queries": 50,
+    "daily_queries": null,
+    "per_seat": false,
+    "min_seats": 1,
+    "requires_verification": false,
+    "purchasable": true,
+    "prices": [
+      {
+        "cycle": "monthly",
+        "total_bdt": 800,
+        "per_month_bdt": 800
+      },
+      {
+        "cycle": "quarterly",
+        "total_bdt": 2160,
+        "per_month_bdt": 720
+      },
+      {
+        "cycle": "yearly",
+        "total_bdt": 8160,
+        "per_month_bdt": 680
+      }
+    ]
+  },
+  {
+    "id": "pro",
+    "name": "Pro",
+    "audience": "Power users, professionals",
+    "features": [
+      "500 queries per month",
+      "Local and OpenRouter models",
+      "Per-claim citations",
+      "Kothora Code included",
+      "Priority support"
+    ],
+    "monthly_bdt": 1500,
+    "monthly_queries": 500,
+    "daily_queries": null,
+    "per_seat": false,
+    "min_seats": 1,
+    "requires_verification": false,
+    "purchasable": true,
+    "prices": [
+      {
+        "cycle": "monthly",
+        "total_bdt": 1500,
+        "per_month_bdt": 1500
+      },
+      {
+        "cycle": "quarterly",
+        "total_bdt": 4050,
+        "per_month_bdt": 1350
+      },
+      {
+        "cycle": "yearly",
+        "total_bdt": 15300,
+        "per_month_bdt": 1275
+      }
+    ]
+  },
+  {
+    "id": "premium",
+    "name": "Premium",
+    "audience": "Heavy users, researchers",
+    "features": [
+      "3,000 queries per month (fair use, 200 per day)",
+      "All models",
+      "Kothora Code included",
+      "Dedicated support"
+    ],
+    "monthly_bdt": 2000,
+    "monthly_queries": 3000,
+    "daily_queries": 200,
+    "per_seat": false,
+    "min_seats": 1,
+    "requires_verification": false,
+    "purchasable": true,
+    "prices": [
+      {
+        "cycle": "monthly",
+        "total_bdt": 2000,
+        "per_month_bdt": 2000
+      },
+      {
+        "cycle": "quarterly",
+        "total_bdt": 5400,
+        "per_month_bdt": 1800
+      },
+      {
+        "cycle": "yearly",
+        "total_bdt": 20400,
+        "per_month_bdt": 1700
+      }
+    ]
+  },
+  {
+    "id": "education",
+    "name": "Education",
+    "audience": "Verified students and educators",
+    "features": [
+      "Scholarly and web search combined",
+      "Bibliography export (BibTeX and plain text)",
+      "Higher limits for thesis work",
+      "Re-verified every academic year"
+    ],
+    "monthly_bdt": 750,
+    "monthly_queries": 1000,
+    "daily_queries": 100,
+    "per_seat": false,
+    "min_seats": 1,
+    "requires_verification": true,
+    "purchasable": true,
+    "prices": [
+      {
+        "cycle": "monthly",
+        "total_bdt": 750,
+        "per_month_bdt": 750
+      },
+      {
+        "cycle": "quarterly",
+        "total_bdt": 2025,
+        "per_month_bdt": 675
+      },
+      {
+        "cycle": "yearly",
+        "total_bdt": 7650,
+        "per_month_bdt": 637
+      }
+    ]
+  },
+  {
+    "id": "business_basic",
+    "name": "Business Basic",
+    "audience": "Teams",
+    "features": ["Per seat, 2-seat minimum", "Admin controls", "Audit logs"],
+    "monthly_bdt": 2500,
+    "monthly_queries": 800,
+    "daily_queries": null,
+    "per_seat": true,
+    "min_seats": 2,
+    "requires_verification": false,
+    "purchasable": true,
+    "prices": [
+      {
+        "cycle": "monthly",
+        "total_bdt": 2500,
+        "per_month_bdt": 2500
+      },
+      {
+        "cycle": "quarterly",
+        "total_bdt": 6750,
+        "per_month_bdt": 2250
+      },
+      {
+        "cycle": "yearly",
+        "total_bdt": 25500,
+        "per_month_bdt": 2125
+      }
+    ]
+  },
+  {
+    "id": "business_premium",
+    "name": "Business Premium",
+    "audience": "Teams with heavier use",
+    "features": ["Per seat, 2-seat minimum", "All models", "API access"],
+    "monthly_bdt": 5000,
+    "monthly_queries": 3000,
+    "daily_queries": null,
+    "per_seat": true,
+    "min_seats": 2,
+    "requires_verification": false,
+    "purchasable": true,
+    "prices": [
+      {
+        "cycle": "monthly",
+        "total_bdt": 5000,
+        "per_month_bdt": 5000
+      },
+      {
+        "cycle": "quarterly",
+        "total_bdt": 13500,
+        "per_month_bdt": 4500
+      },
+      {
+        "cycle": "yearly",
+        "total_bdt": 51000,
+        "per_month_bdt": 4250
+      }
+    ]
+  },
+  {
+    "id": "enterprise",
+    "name": "Enterprise",
+    "audience": "5+ seats, custom terms",
+    "features": ["SLA", "Private deployment options", "Training"],
+    "monthly_bdt": null,
+    "monthly_queries": 3000,
+    "daily_queries": null,
+    "per_seat": true,
+    "min_seats": 5,
+    "requires_verification": false,
+    "purchasable": false,
+    "prices": []
+  }
+]

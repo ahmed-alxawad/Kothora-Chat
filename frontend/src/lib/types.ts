@@ -82,3 +82,14 @@ export type ChatEvent =
       model: string
     }
   | { type: "error"; message: string }
+
+/** What the thread view tracks per answer while it streams. */
+export type AnswerPhase = "searching" | "thinking" | "writing" | "done"
+
+export type ThreadMessage = Message & {
+  phase?: AnswerPhase
+  notice?: string
+}
+
+/** Where an answer should look: the web, scholarly literature, or nowhere (writing help). */
+export type Focus = "web" | "academic" | "writing"

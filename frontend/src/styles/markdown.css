@@ -1,0 +1,222 @@
+/* Answer typography: Markdown blocks, code, tables and citation pills. */
+.markdown {
+  min-width: 0;
+  font-size: 16px;
+  line-height: 1.72;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.markdown > * {
+  margin: 0;
+}
+
+.markdown > * + * {
+  margin-top: 0.85em;
+}
+
+.markdown h2,
+.markdown h3,
+.markdown h4,
+.markdown h5,
+.markdown h6 {
+  margin-top: 1.5em;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.markdown h2 {
+  font-size: 1.3em;
+}
+
+.markdown h3 {
+  font-size: 1.12em;
+}
+
+.markdown h4,
+.markdown h5,
+.markdown h6 {
+  font-size: 1em;
+}
+
+.markdown ul,
+.markdown ol {
+  padding-left: 1.4em;
+}
+
+.markdown li + li {
+  margin-top: 0.3em;
+}
+
+.markdown li::marker {
+  color: var(--muted);
+}
+
+.markdown strong {
+  font-weight: 650;
+}
+
+.markdown code {
+  padding: 0.1em 0.35em;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--code-bg);
+  font: 0.87em var(--font-mono);
+}
+
+.markdown blockquote {
+  padding: 2px 0 2px 14px;
+  border-left: 3px solid var(--brand-soft);
+  color: var(--text-2);
+}
+
+.markdown hr {
+  border: none;
+  border-top: 1px solid var(--border);
+}
+
+.table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+
+.markdown th,
+.markdown td {
+  min-width: 7rem;
+  /* Keep words whole; a wide table scrolls inside .table-scroll instead. */
+  overflow-wrap: normal;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.markdown th {
+  background: var(--surface-2);
+  font-weight: 600;
+}
+
+.markdown tr:last-child td {
+  border-bottom: none;
+}
+
+/* Code blocks */
+.code-block {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--code-bg);
+}
+
+.code-block figcaption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 6px 4px 14px;
+  border-bottom: 1px solid var(--border);
+  font: 12px var(--font-mono);
+  color: var(--muted);
+}
+
+.code-block pre {
+  margin: 0;
+  padding: 14px 16px;
+  overflow-x: auto;
+}
+
+.code-block pre code {
+  padding: 0;
+  border: none;
+  background: none;
+  font: 13.5px/1.65 var(--font-mono);
+}
+
+/* Citations: a numbered pill with a source card on hover or keyboard focus. */
+.citation {
+  position: relative;
+  white-space: nowrap;
+}
+
+.citation-pill {
+  display: inline-grid;
+  place-items: center;
+  min-width: 19px;
+  height: 19px;
+  margin-left: 2px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-3);
+  color: var(--text-2);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  vertical-align: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.citation-pill:hover,
+.citation-pill:focus-visible {
+  background: var(--brand);
+  color: var(--on-brand);
+}
+
+.citation-card {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  z-index: 10;
+  display: none;
+  flex-direction: column;
+  gap: 3px;
+  width: 270px;
+  padding: 10px 12px;
+  transform: translateX(-50%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  font-size: 13px;
+  line-height: 1.45;
+  white-space: normal;
+  pointer-events: none;
+}
+
+.citation:hover .citation-card,
+.citation:focus-within .citation-card {
+  display: flex;
+}
+
+.citation-domain {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.citation-title {
+  font-weight: 600;
+}
+
+.citation-snippet {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--text-2);
+}
+
+@media (max-width: 600px) {
+  .citation-card {
+    left: auto;
+    right: -40px;
+    transform: none;
+    width: min(270px, 80vw);
+  }
+}

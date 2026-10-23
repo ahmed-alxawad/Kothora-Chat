@@ -1,0 +1,330 @@
+import {
+  createEffect,
+  createSignal,
+  For,
+  Match,
+  on,
+  onCleanup,
+  Show,
+  Switch,
+  type JSX,
+} from "solid-js"
+import { createStore, produce } from "solid-js/store"
+import { ApiError, api, streamMessage } from "../../lib/api"
+import { greeting } from "../../lib/time"
+import type { ChatEvent, Focus, ThreadMessage, Usage, User } from "../../lib/types"
+import { Icon, KothoraMark, type IconName } from "../ui/Icon"
+import { Composer } from "./Composer"
+import { AssistantMessage, UserMessage } from "./Messages"
+
+const SUGGESTIONS: { icon: IconName; text: string }[] = [
+  { icon: "globe", text: "Compare bKash and Nagad for sending money" },
+  { icon: "sparkle", text: "How did the Padma Bridge change travel to Dhaka?" },
+  { icon: "pen", text: "Write a Python function to validate a Bangladeshi mobile number" },
+  { icon: "book", text: "বাংলাদেশের রাজধানী কোথায়?" },
+]
+
+/** Within this distance of the bottom, new text keeps the view pinned to the latest line. */
+const STICK_TO_BOTTOM_PX = 96
+
+type TurnError = { message: string; quota: boolean; question: string }
+
+export function ChatView(props: {
+  conversationId: string | null
+  user: User | undefined
+  usage: Usage | undefined
+  model: string
+  onConversationCreated: (id: string) => void
+  onTurnFinished: () => void
+  onShowPlans: () => void
+}) {
+  const [thread, setThread] = createStore<{ messages: ThreadMessage[] }>({ messages: [] })
+  const [focus, setFocus] = createSignal<Focus>("web")
+  const [streaming, setStreaming] = createSignal(false)
+  const [error, setError] = createSignal<TurnError | null>(null)
+  const [loadError, setLoadError] = createSignal("")
+  const [atBottom, setAtBottom] = createSignal(true)
+  let scroller: HTMLDivElement | undefined
+  let abort: AbortController | undefined
+  // The conversation the current turn writes to; selecting it must not reload it.
+  let turnConversationId: string | null = null
+
+  const isEmpty = () => thread.messages.length === 0 && !loadError()
+
+  const onKey = (event: KeyboardEvent) => {
+    if (event.key === "Escape" && streaming()) abort?.abort()
+  }
+  document.addEventListener("keydown", onKey)
+  onCleanup(() => {
+    document.removeEventListener("keydown", onKey)
+    abort?.abort()
+  })
+
+  createEffect(
+    on(
+      () => props.conversationId,
+      async (id) => {
+        if (id && id === turnConversationId) return
+        abort?.abort()
+        setError(null)
+        setLoadError("")
+        setThread("messages", [])
+        if (!id) return
+        try {
+          const detail = await api.conversation(id)
+          // Ignore a slow response for a conversation the user has already left.
+          if (props.conversationId !== id) return
+          setThread("messages", detail.messages)
+          scrollToBottom("auto")
+        } catch (err) {
+          setLoadError(describe(err))
+        }
+      },
+    ),
+  )
+
+  // Follow the answer as it streams, unless the reader has scrolled up to read.
+  createEffect(
+    on(
+      () => [thread.messages.length, thread.messages[thread.messages.length - 1]?.content],
+      () => {
+        if (atBottom()) scrollToBottom("auto")
+      },
+      { defer: true },
+    ),
+  )
+
+  function scrollToBottom(behavior: ScrollBehavior) {
+    queueMicrotask(() => scroller?.scrollTo({ top: scroller.scrollHeight, behavior }))
+  }
+
+  function onScroll() {
+    if (!scroller) return
+    const distance = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight
+    setAtBottom(distance < STICK_TO_BOTTOM_PX)
+  }
+
+  function updatePending(change: (message: ThreadMessage) => void) {
+    setThread(
+      "messages",
+      (message) => message.phase !== undefined && message.phase !== "done",
+      produce(change),
+    )
+  }
+
+  function dropPending() {
+    setThread("messages", (messages) =>
+      messages.filter(
+        (message) => message.phase === undefined || message.phase === "done" || message.content,
+      ),
+    )
+    updatePending((message) => (message.phase = "done"))
+  }
+
+  function applyEvent(event: ChatEvent) {
+    switch (event.type) {
+      case "meta":
+        // A second meta means the router fell back to another model; start the text again.
+        updatePending((message) => {
+          message.sources = event.sources
+          message.model = event.model
+          message.content = ""
+          message.phase = "thinking"
+        })
+        break
+      case "notice":
+        updatePending((message) => (message.notice = event.message))
+        break
+      case "delta":
+        updatePending((message) => {
+          message.content += event.text
+          message.phase = "writing"
+        })
+        break
+      case "done":
+        updatePending((message) => {
+          message.id = event.message_id
+          message.sources = event.sources
+          message.model = event.model
+          message.route = event.route
+          message.phase = "done"
+        })
+        break
+      case "error":
+        throw new Error(event.message)
+    }
+  }
+
+  async function send(question: string) {
+    if (streaming()) return
+    setError(null)
+    setStreaming(true)
+    setAtBottom(true)
+    abort = new AbortController()
+    const now = new Date().toISOString()
+    const base = { sources: [], model: null, route: null, created_at: now }
+    setThread("messages", (messages) => [
+      ...messages,
+      { ...base, id: `local-user-${Date.now()}`, role: "user", content: question },
+      {
+        ...base,
+        id: `local-answer-${Date.now()}`,
+        role: "assistant",
+        content: "",
+        phase: focus() === "writing" ? "thinking" : "searching",
+      },
+    ])
+    scrollToBottom("smooth")
+
+    try {
+      let conversationId = props.conversationId
+      if (!conversationId) {
+        conversationId = (await api.createConversation()).id
+        turnConversationId = conversationId
+        props.onConversationCreated(conversationId)
+      }
+      turnConversationId = conversationId
+      await streamMessage(
+        conversationId,
+        question,
+        {
+          model: props.model,
+          webSearch: focus() === "web",
+          scholarlySearch: focus() === "academic",
+          signal: abort.signal,
+        },
+        applyEvent,
+      )
+    } catch (err) {
+      const aborted = err instanceof DOMException && err.name === "AbortError"
+      if (!aborted) {
+        setError({
+          message: describe(err),
+          quota: err instanceof ApiError && err.status === 429,
+          question,
+        })
+      }
+    } finally {
+      // A stopped answer keeps what was written so far, as other chat apps do.
+      dropPending()
+      setStreaming(false)
+      turnConversationId = null
+      props.onTurnFinished()
+    }
+  }
+
+  return (
+    <section class="chat" classList={{ "is-empty": isEmpty() }}>
+      <div class="thread-scroll" ref={scroller} onScroll={onScroll}>
+        <Switch>
+          <Match when={isEmpty()}>
+            <div class="welcome">
+              <KothoraMark size={44} />
+              <h1 class="greeting">{greeting(props.user?.name ?? "", new Date())}</h1>
+              <p class="welcome-sub">Ask in Bangla or English. Every answer shows its sources.</p>
+            </div>
+          </Match>
+          <Match when={loadError()}>
+            <div class="thread">
+              <ErrorCard message={`Could not open this chat. ${loadError()}`} />
+            </div>
+          </Match>
+          <Match when={true}>
+            <div class="thread">
+              <For each={thread.messages}>
+                {(message) =>
+                  message.role === "user" ? (
+                    <UserMessage message={message} />
+                  ) : (
+                    <AssistantMessage
+                      message={message}
+                      conversationId={props.conversationId}
+                      canExportBibliography={props.usage?.bibliography_export ?? false}
+                    />
+                  )
+                }
+              </For>
+              <Show when={error()}>
+                {(current) => (
+                  <ErrorCard message={current().message}>
+                    <Show
+                      when={current().quota}
+                      fallback={
+                        <button
+                          type="button"
+                          class="secondary"
+                          onClick={() => send(current().question)}
+                        >
+                          Try again
+                        </button>
+                      }
+                    >
+                      <button type="button" class="primary" onClick={props.onShowPlans}>
+                        See plans
+                      </button>
+                    </Show>
+                  </ErrorCard>
+                )}
+              </Show>
+            </div>
+          </Match>
+        </Switch>
+      </div>
+
+      <div class="composer-dock">
+        <Show when={!atBottom() && !isEmpty()}>
+          <button
+            type="button"
+            class="jump-button"
+            aria-label="Jump to latest"
+            onClick={() => {
+              setAtBottom(true)
+              scrollToBottom("smooth")
+            }}
+          >
+            <Icon name="arrowDown" size={18} />
+          </button>
+        </Show>
+        <Composer
+          streaming={streaming()}
+          focus={focus()}
+          academicAvailable={props.usage?.scholarly_search ?? false}
+          onFocusChange={setFocus}
+          onSubmit={send}
+          onStop={() => abort?.abort()}
+          placeholder={isEmpty() ? "Ask anything…" : "Ask a follow-up…"}
+          autofocus
+        />
+        <Show
+          when={isEmpty()}
+          fallback={<p class="disclaimer">Kothora can make mistakes. Check the cited sources.</p>}
+        >
+          <div class="suggestions">
+            <For each={SUGGESTIONS}>
+              {(suggestion) => (
+                <button type="button" class="suggestion" onClick={() => send(suggestion.text)}>
+                  <Icon name={suggestion.icon} size={16} />
+                  <span>{suggestion.text}</span>
+                </button>
+              )}
+            </For>
+          </div>
+        </Show>
+      </div>
+    </section>
+  )
+}
+
+function ErrorCard(props: { message: string; children?: JSX.Element }) {
+  return (
+    <div class="error-card" role="alert">
+      <Icon name="alert" size={18} />
+      <p>{props.message}</p>
+      {props.children}
+    </div>
+  )
+}
+
+function describe(err: unknown): string {
+  return err instanceof Error ? err.message : String(err)
+}

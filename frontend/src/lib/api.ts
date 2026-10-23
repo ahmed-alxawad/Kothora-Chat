@@ -20,21 +20,35 @@ export class ApiError extends Error {
   }
 }
 
+// The token is kept in memory as well as in localStorage, so a session still works for
+// this visit when storage is blocked (private browsing, sandboxed frames).
+let memoryToken: string | null = null
+
 export function getToken(): string | null {
+  if (memoryToken) return memoryToken
   try {
-    return localStorage.getItem(TOKEN_KEY)
+    memoryToken = localStorage.getItem(TOKEN_KEY)
   } catch {
-    return null
+    // Storage is blocked; only the in-memory token exists.
   }
+  return memoryToken
 }
 
 export function setToken(token: string | null): void {
+  memoryToken = token
   try {
     if (token) localStorage.setItem(TOKEN_KEY, token)
     else localStorage.removeItem(TOKEN_KEY)
   } catch {
-    // Private browsing can block storage; the session then lasts until the tab closes.
+    // Storage is blocked: the session lasts until the page is closed or reloaded.
   }
+}
+
+let unauthorizedHandler: (() => void) | null = null
+
+/** Called when the API rejects the session (expired or revoked token). */
+export function onUnauthorized(handler: () => void): void {
+  unauthorizedHandler = handler
 }
 
 async function send(path: string, init: RequestInit = {}): Promise<Response> {
@@ -43,6 +57,7 @@ async function send(path: string, init: RequestInit = {}): Promise<Response> {
   if (token) headers.set("Authorization", `Bearer ${token}`)
   if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json")
   const response = await fetch(path, { ...init, headers })
+  if (response.status === 401 && token) unauthorizedHandler?.()
   if (!response.ok) throw new ApiError(response.status, await errorMessage(response))
   return response
 }
@@ -84,6 +99,11 @@ export const api = {
   conversations: () => json<Conversation[]>("/api/conversations"),
   createConversation: () => json<Conversation>("/api/conversations", { method: "POST" }),
   conversation: (id: string) => json<ConversationDetail>(`/api/conversations/${id}`),
+  renameConversation: (id: string, title: string) =>
+    json<Conversation>(`/api/conversations/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ title }),
+    }),
   deleteConversation: (id: string) => send(`/api/conversations/${id}`, { method: "DELETE" }),
   bibliography: async (conversationId: string, messageId: string, format: "bibtex" | "text") => {
     const path = `/api/conversations/${conversationId}/messages/${messageId}/bibliography`

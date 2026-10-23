@@ -20,7 +20,7 @@ with fewer limits ([docs/yukioshi-code-analysis.md](docs/yukioshi-code-analysis.
 | SSLCommerz checkout, IPN, server-side validation, idempotent activation | `services/payments/`, `services/billing.py` | 1.2, 3.3 |
 | Education plan: verification gate, OpenAlex scholarly search, BibTeX and reference-list export | `api/billing.py`, `services/search.py`, `services/bibliography.py` | 4.3 |
 | Per-query log of route, tokens, cost and latency (data for a learned router later) | `models.UsageRecord` | 2.1 (PPO), 8.3 |
-| Web app: chat with streaming, citation chips, usage meter, plans and checkout | `frontend/` | — |
+| Web app in the style of ChatGPT, Claude and Perplexity: chat history, source cards, citation pills, Markdown answers, plans and checkout, light and dark | `frontend/` ([guide](frontend/README.md)) | — |
 
 Where the business document left a decision open or contradicted itself, the
 code takes one position and says so. See
@@ -36,7 +36,7 @@ backend/            FastAPI service (Python 3.11+)
     plans.py        plan catalog and price arithmetic
     models.py       SQLAlchemy tables
   tests/            pytest; every outbound HTTP call is faked
-frontend/           SolidJS + Vite web app
+frontend/           SolidJS + Vite web app, plus a self-contained demo build
 deploy/             SearXNG config
 docs/               decisions, YukiOshi Code analysis, deployment
 docker-compose.yml  web + api + Postgres + Redis (+ Ollama, SearXNG profiles)
@@ -64,7 +64,10 @@ Frontend:
 cd frontend
 npm install
 npm run dev                                  # http://localhost:5173, proxies /api to :8000
+npm run build:demo                           # one-page demo with sample answers, no backend
 ```
+
+The [frontend guide](frontend/README.md) covers its structure, design tokens and conventions.
 
 ## Tests and checks
 
@@ -72,7 +75,7 @@ npm run dev                                  # http://localhost:5173, proxies /a
 cd backend && ruff check . && ruff format --check . && pytest -q
 # against real services, as CI does:
 KOTHORA_TEST_DATABASE_URL=postgresql+asyncpg://… KOTHORA_TEST_REDIS_URL=redis://… pytest -q
-cd frontend && npm run lint && npm test && npm run build
+cd frontend && npm run lint && npm run typecheck && npm test && npm run build
 ```
 
 CI runs the same commands (`.github/workflows/ci.yml`).
