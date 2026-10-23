@@ -10,9 +10,11 @@ import {
   type JSX,
 } from "solid-js"
 import { createStore, produce } from "solid-js/store"
+import { useApp } from "../../app-context"
 import { ApiError, api, streamMessage } from "../../lib/api"
+import { navigate } from "../../lib/router"
 import { greeting } from "../../lib/time"
-import type { ChatEvent, Focus, ThreadMessage, Usage, User } from "../../lib/types"
+import type { ChatEvent, Focus, Reasoning, ThreadMessage } from "../../lib/types"
 import { Icon, KothoraMark, type IconName } from "../ui/Icon"
 import { Composer } from "./Composer"
 import { AssistantMessage, UserMessage } from "./Messages"
@@ -31,15 +33,14 @@ type TurnError = { message: string; quota: boolean; question: string }
 
 export function ChatView(props: {
   conversationId: string | null
-  user: User | undefined
-  usage: Usage | undefined
-  model: string
   onConversationCreated: (id: string) => void
-  onTurnFinished: () => void
-  onShowPlans: () => void
 }) {
+  const app = useApp()
   const [thread, setThread] = createStore<{ messages: ThreadMessage[] }>({ messages: [] })
   const [focus, setFocus] = createSignal<Focus>("web")
+  const [model, setModel] = createSignal("")
+  const [reasoning, setReasoning] = createSignal<Reasoning>("standard")
+  const [skillId, setSkillId] = createSignal<string | null>(null)
   const [streaming, setStreaming] = createSignal(false)
   const [error, setError] = createSignal<TurnError | null>(null)
   const [loadError, setLoadError] = createSignal("")
@@ -50,6 +51,13 @@ export function ChatView(props: {
   let turnConversationId: string | null = null
 
   const isEmpty = () => thread.messages.length === 0 && !loadError()
+  const projectId = () =>
+    props.conversationId
+      ? (app.conversations()?.find((c) => c.id === props.conversationId)?.project_id ?? null)
+      : app.pendingProjectId()
+  const projectName = () => app.projects()?.find((p) => p.id === projectId())?.name
+  const usage = () => app.usage()
+  const showPlans = () => navigate({ name: "plans" })
 
   const onKey = (event: KeyboardEvent) => {
     if (event.key === "Escape" && streaming()) abort?.abort()
@@ -179,7 +187,12 @@ export function ChatView(props: {
     try {
       let conversationId = props.conversationId
       if (!conversationId) {
-        conversationId = (await api.createConversation()).id
+        conversationId = (
+          await api.createConversation({
+            projectId: app.pendingProjectId(),
+            temporary: app.incognito(),
+          })
+        ).id
         turnConversationId = conversationId
         props.onConversationCreated(conversationId)
       }
@@ -188,9 +201,11 @@ export function ChatView(props: {
         conversationId,
         question,
         {
-          model: props.model,
+          model: model(),
           webSearch: focus() === "web",
           scholarlySearch: focus() === "academic",
+          reasoning: reasoning(),
+          skillId: skillId(),
           signal: abort.signal,
         },
         applyEvent,
@@ -209,7 +224,8 @@ export function ChatView(props: {
       dropPending()
       setStreaming(false)
       turnConversationId = null
-      props.onTurnFinished()
+      app.refetchConversations()
+      app.refetchUsage()
     }
   }
 
@@ -220,8 +236,18 @@ export function ChatView(props: {
           <Match when={isEmpty()}>
             <div class="welcome">
               <KothoraMark size={44} />
-              <h1 class="greeting">{greeting(props.user?.name ?? "", new Date())}</h1>
-              <p class="welcome-sub">Ask in Bangla or English. Every answer shows its sources.</p>
+              <h1 class="greeting">
+                <Switch fallback={greeting(app.user()?.name ?? "", new Date())}>
+                  <Match when={app.incognito()}>Incognito chat</Match>
+                  <Match when={projectName()}>{projectName()}</Match>
+                </Switch>
+              </h1>
+              <p class="welcome-sub">
+                <Switch fallback="Ask in Bangla or English. Every answer shows its sources.">
+                  <Match when={app.incognito()}>This chat will not be saved to your history.</Match>
+                  <Match when={projectName()}>Chats here follow this project's instructions.</Match>
+                </Switch>
+              </p>
             </div>
           </Match>
           <Match when={loadError()}>
@@ -239,7 +265,7 @@ export function ChatView(props: {
                     <AssistantMessage
                       message={message}
                       conversationId={props.conversationId}
-                      canExportBibliography={props.usage?.bibliography_export ?? false}
+                      canExportBibliography={usage()?.bibliography_export ?? false}
                     />
                   )
                 }
@@ -259,7 +285,7 @@ export function ChatView(props: {
                         </button>
                       }
                     >
-                      <button type="button" class="primary" onClick={props.onShowPlans}>
+                      <button type="button" class="primary" onClick={showPlans}>
                         See plans
                       </button>
                     </Show>
@@ -288,12 +314,21 @@ export function ChatView(props: {
         <Composer
           streaming={streaming()}
           focus={focus()}
-          academicAvailable={props.usage?.scholarly_search ?? false}
+          academicAvailable={usage()?.scholarly_search ?? false}
           onFocusChange={setFocus}
+          models={usage()?.allowed_models ?? []}
+          model={model()}
+          onModelChange={setModel}
+          reasoning={reasoning()}
+          onReasoningChange={setReasoning}
+          skills={(app.skills.error ? [] : (app.skills() ?? [])).filter((s) => s.installed)}
+          skillId={skillId()}
+          onSkillChange={setSkillId}
+          projectName={projectName()}
+          incognito={app.incognito()}
           onSubmit={send}
           onStop={() => abort?.abort()}
           placeholder={isEmpty() ? "Ask anything…" : "Ask a follow-up…"}
-          autofocus
         />
         <Show
           when={isEmpty()}

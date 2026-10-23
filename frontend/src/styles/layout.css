@@ -72,86 +72,11 @@
   letter-spacing: -0.01em;
 }
 
-.new-chat {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 9px 10px;
-  border: none;
-  border-radius: 10px;
-  background: transparent;
-  font-weight: 500;
-  font-size: 14.5px;
-}
-
-.new-chat:hover {
-  background: var(--sidebar-hover);
-}
-
-.new-chat kbd {
-  margin-left: auto;
-  font: 11px var(--font-ui);
-  color: var(--muted);
-  opacity: 0;
-  transition: opacity 0.15s;
-}
-
-.new-chat:hover kbd {
-  opacity: 1;
-}
-
-.sidebar-search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 36px;
-  padding: 0 10px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--muted);
-}
-
-.sidebar-search:focus-within {
-  border-color: var(--border-strong);
-}
-
-.sidebar-search input {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 14px;
-  color: var(--text);
-}
-
-.history {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  margin: 2px -6px 0;
-  padding: 0 6px 8px;
-}
-
 .history-label {
   margin: 0;
   padding: 14px 10px 4px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--muted);
-}
-
-.history ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.history-empty {
-  margin: 16px 10px;
-  font-size: 13.5px;
   color: var(--muted);
 }
 
@@ -227,15 +152,6 @@
   right: 0;
 }
 
-.account .segmented {
-  display: flex;
-}
-
-.account .segmented button {
-  flex: 1;
-  padding-inline: 6px;
-}
-
 .account-button {
   display: flex;
   align-items: center;
@@ -299,27 +215,6 @@
   gap: 4px;
   height: var(--topbar-height);
   padding: 0 12px;
-}
-
-.model-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border: none;
-  border-radius: 10px;
-  background: none;
-  font: 600 16.5px var(--font-display);
-  color: var(--text);
-}
-
-.model-button:hover,
-.model-button[aria-expanded="true"] {
-  background: var(--surface-2);
-}
-
-.model-button svg {
-  color: var(--muted);
 }
 
 .topbar-end {

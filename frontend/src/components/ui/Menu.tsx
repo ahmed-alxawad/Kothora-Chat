@@ -8,7 +8,7 @@ export function Menu(props: {
   label: string
   trigger: JSX.Element
   triggerClass?: string
-  placement?: "below" | "above" | "below-end"
+  placement?: "below" | "above" | "below-end" | "above-end"
   children: (close: () => void) => JSX.Element
 }) {
   const [open, setOpen] = createSignal(false)

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import type { Conversation } from "./types"
-import { greeting, groupConversations } from "./time"
+import { greeting, groupConversations, relativeTime } from "./time"
 
 const NOW = new Date(2026, 9, 23, 15, 0) // 23 Oct 2026, 15:00 local time
 
@@ -44,5 +44,21 @@ describe("greeting", () => {
 
   it("falls back when the name is unknown", () => {
     expect(greeting("", NOW)).toBe("Good afternoon, there")
+  })
+})
+
+describe("relativeTime", () => {
+  it("picks the largest whole unit", () => {
+    const at = (ms: number) => new Date(NOW.getTime() - ms).toISOString()
+    expect(relativeTime(at(30_000), NOW)).toBe("just now")
+    expect(relativeTime(at(5 * 60_000), NOW)).toBe("5m ago")
+    expect(relativeTime(at(3 * 3_600_000), NOW)).toBe("3h ago")
+    expect(relativeTime(at(4 * 86_400_000), NOW)).toBe("4d ago")
+    expect(relativeTime(at(65 * 86_400_000), NOW)).toBe("2mo ago")
+    expect(relativeTime(at(400 * 86_400_000), NOW)).toBe("1y ago")
+  })
+
+  it("treats future times as now", () => {
+    expect(relativeTime(new Date(NOW.getTime() + 60_000).toISOString(), NOW)).toBe("just now")
   })
 })

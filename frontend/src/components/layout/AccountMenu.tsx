@@ -1,7 +1,8 @@
 import { For, Show } from "solid-js"
+import { useApp } from "../../app-context"
 import { initials } from "../../lib/format"
+import { navigate } from "../../lib/router"
 import { setTheme, theme, type ThemePreference } from "../../lib/theme"
-import type { Usage, User } from "../../lib/types"
 import { Icon, type IconName } from "../ui/Icon"
 import { Menu } from "../ui/Menu"
 
@@ -11,19 +12,9 @@ const THEMES: { id: ThemePreference; label: string; icon: IconName }[] = [
   { id: "dark", label: "Dark", icon: "moon" },
 ]
 
-/** The account button at the foot of the sidebar: plan, usage, theme, sign out. */
-export function AccountMenu(props: {
-  user: User | undefined
-  usage: Usage | undefined
-  onShowPlans: () => void
-  onSignOut: () => void
-}) {
-  const percentUsed = () => {
-    const usage = props.usage
-    return usage
-      ? Math.min(100, Math.round((usage.used_this_month / usage.monthly_limit) * 100))
-      : 0
-  }
+/** The account button at the foot of the sidebar, with Claude-style account actions. */
+export function AccountMenu() {
+  const app = useApp()
 
   return (
     <div class="account">
@@ -34,92 +25,81 @@ export function AccountMenu(props: {
         trigger={
           <>
             <span class="avatar" aria-hidden="true">
-              {initials(props.user?.name ?? "")}
+              {initials(app.user()?.name ?? "")}
             </span>
             <span class="account-text">
-              <span class="account-name">{props.user?.name ?? "…"}</span>
-              <span class="account-plan">{props.usage?.plan_name ?? ""} plan</span>
+              <span class="account-name">{app.user()?.name ?? "…"}</span>
+              <span class="account-plan">{app.usage()?.plan_name ?? ""}</span>
             </span>
+            <Icon name="chevronDown" size={15} class="account-chevron" />
           </>
         }
       >
-        {(close) => (
-          <>
-            <div class="menu-section">
-              <span class="menu-caption">{props.user?.email}</span>
-            </div>
-            <Show when={props.usage}>
-              {(usage) => (
-                <div class="menu-section usage">
-                  <div class="usage-row">
-                    <span>Queries this month</span>
-                    <span class="numeric">
-                      {usage().used_this_month} / {usage().monthly_limit}
-                    </span>
-                  </div>
-                  <div
-                    class="meter"
-                    role="meter"
-                    aria-label="Monthly queries used"
-                    aria-valuenow={percentUsed()}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                  >
-                    <div style={{ width: `${percentUsed()}%` }} />
-                  </div>
-                  <Show when={usage().daily_limit !== null}>
-                    <span class="menu-caption">
-                      {usage().used_today} of {usage().daily_limit} today · resets at midnight Dhaka
-                      time
-                    </span>
-                  </Show>
-                </div>
-              )}
-            </Show>
+        {(close) => {
+          const item = (icon: IconName, label: string, action: () => void, hint?: string) => (
             <button
               type="button"
               role="menuitem"
               class="menu-item"
               onClick={() => {
                 close()
-                props.onShowPlans()
+                action()
               }}
             >
-              <Icon name="card" size={16} />
-              {props.usage?.plan_id === "free" ? "Upgrade plan" : "Plans and billing"}
+              <Icon name={icon} size={16} />
+              <span>{label}</span>
+              <Show when={hint}>
+                <kbd class="menu-hint">{hint}</kbd>
+              </Show>
             </button>
-            <div class="menu-section">
-              <span class="menu-caption">Theme</span>
-              <div class="segmented" role="radiogroup" aria-label="Theme">
-                <For each={THEMES}>
-                  {(option) => (
-                    <button
-                      type="button"
-                      role="radio"
-                      aria-checked={theme() === option.id}
-                      classList={{ active: theme() === option.id }}
-                      onClick={() => setTheme(option.id)}
-                    >
-                      <Icon name={option.icon} size={15} />
-                      {option.label}
-                    </button>
-                  )}
-                </For>
+          )
+          return (
+            <>
+              <div class="menu-section">
+                <span class="menu-caption">{app.user()?.email}</span>
               </div>
-            </div>
-            <button
-              type="button"
-              role="menuitem"
-              class="menu-item"
-              onClick={() => {
-                close()
-                props.onSignOut()
-              }}
-            >
-              <Icon name="logout" size={16} /> Sign out
-            </button>
-          </>
-        )}
+              {item("settings", "Settings", () => app.openSettings("general"), "Ctrl ⇧ ,")}
+              {item("chart", "Usage", () => app.openSettings("usage"))}
+              <button
+                type="button"
+                role="menuitemcheckbox"
+                aria-checked={app.incognito()}
+                class="menu-item"
+                onClick={() => app.setIncognito(!app.incognito())}
+              >
+                <Icon name="ghost" size={16} />
+                <span>Incognito</span>
+                <span class="switch" classList={{ on: app.incognito() }} aria-hidden="true" />
+              </button>
+              <div class="menu-section">
+                <span class="menu-caption">Appearance</span>
+                <div class="segmented" role="radiogroup" aria-label="Appearance">
+                  <For each={THEMES}>
+                    {(option) => (
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={theme() === option.id}
+                        classList={{ active: theme() === option.id }}
+                        onClick={() => setTheme(option.id)}
+                      >
+                        <Icon name={option.icon} size={15} />
+                        {option.label}
+                      </button>
+                    )}
+                  </For>
+                </div>
+              </div>
+              <hr class="menu-rule" />
+              {item("globe", "Language", () => app.openSettings("general"))}
+              {item("help", "Get help", app.openShortcuts)}
+              {item("card", "View all plans", () => navigate({ name: "plans" }))}
+              {item("terminal", "Get Kothora Code", () => navigate({ name: "code" }))}
+              <hr class="menu-rule" />
+              {item("logout", "Log out", app.signOut)}
+            </>
+          )
+        }}
       </Menu>
     </div>
   )

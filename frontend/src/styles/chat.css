@@ -328,24 +328,6 @@
   gap: 8px;
 }
 
-.focus-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
-  background: transparent;
-  color: var(--text-2);
-  font-size: 13.5px;
-  font-weight: 500;
-}
-
-.focus-button:hover,
-.focus-button[aria-expanded="true"] {
-  background: var(--surface-2);
-}
-
 .send-button {
   display: grid;
   place-items: center;

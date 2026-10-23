@@ -35,47 +35,39 @@ npm run build
 
 ```
 src/
-  index.tsx              Entry: theme, demo switch, render
-  App.tsx                Shell: sign-in gate, sidebar, top bar, routes, shortcuts
+  index.tsx, App.tsx     Entry; App wires routes, dialogs, shortcuts and the shared state
+  app-context.ts         Data and actions shared by every screen (useApp())
   env.ts                 IS_DEMO build flag
   components/
-    auth/AuthView.tsx      Sign in and sign up
-    layout/Sidebar.tsx     New chat, search, history grouped by date, rename and delete
-    layout/AccountMenu.tsx Plan, usage meter, theme, sign out
-    layout/TopBar.tsx      Model picker and upgrade button
-    chat/ChatView.tsx      One conversation: loading, sending, streaming, scrolling, errors
-    chat/Composer.tsx      Message box with the Web / Academic / Writing focus picker
-    chat/Messages.tsx      User bubble; answer with status, sources, Markdown and actions
-    chat/SourceCards.tsx   Source cards shown above an answer
-    chat/Markdown.tsx      Renders parsed Markdown, code blocks and citation pills
-    plans/PlansView.tsx    Plans, billing cycles and checkout
-    ui/Icon.tsx            Inline icon set and the Kothora mark
-    ui/Menu.tsx            Popover menu used by every dropdown
+    layout/              Sidebar (nav, Projects, Recents), TopBar (Chat | Code, incognito),
+                         AccountMenu, SearchDialog (Ctrl+K), ShortcutsDialog
+    chat/                ChatView, Composer (+ menu, mode, model, voice), Messages,
+                         SourceCards, Markdown
+    pages/               Projects, Project, Library, Plugins & Skills, Automations,
+                         Kothora Code, Plans
+    settings/            SettingsDialog and its sections (General … API keys)
+    extensions/          Plugins and Skills panels, shared by the page and Settings
+    auth/                Sign in and sign up
+    ui/                  Icon, Menu, Dialog, Toaster, empty/error states
   lib/
     api.ts               HTTP client, session token, streaming a reply
-    sse.ts               Incremental Server-Sent Events parser
-    markdown.ts          Markdown → tree (never HTML strings)
-    router.ts, routes.ts URL routes: /, /c/:id, /billing
-    time.ts              History date groups and the greeting
-    theme.ts             System / light / dark preference
-    format.ts            Safe links, domains, taka, initials, model names
-    clipboard.ts         Copy with a failure result
-    types.ts             Shapes shared with the backend API
-  demo/
-    backend.ts           In-browser stand-in for the API (demo build only)
-    answers.ts           Sample answers with real sources
-    plans.json           Plan catalog exported from the backend (npm run export-plans)
-  styles/
-    tokens.css           Colors, fonts, sizes for light and dark
-    base.css             Element defaults, buttons, menus, switches
-    layout.css           Sidebar, top bar, drawer on phones
-    chat.css             Welcome screen, thread, sources, composer
-    markdown.css         Answer typography, tables, code, citations
-    pages.css            Plans and sign-in
-scripts/
-  build-demo.mjs         Packs the demo into one HTML page
-  export-plans.py        Copies the backend's plan catalog into src/demo/plans.json
+    resource.ts          Data loading that never throws (missing endpoints degrade)
+    sse.ts, markdown.ts  Stream parser; Markdown to a tree (never HTML strings)
+    router.ts, routes.ts URLs: /, /c/:id, /p/:id, /projects, /library, /plugins,
+                         /skills, /automations, /code, /billing
+    attachments.ts       Text files sent inside the message
+    dictation.ts         Voice typing through the browser
+    forecast.ts          "Will I run out this month?"
+    time.ts, format.ts, theme.ts, toast.ts, clipboard.ts, types.ts
+  demo/                  In-browser backend for the demo build, with sample data
+  styles/                tokens, base, layout, chat, markdown, pages, app (new screens)
+scripts/                 build-demo.mjs, export-plans.py
 ```
+
+Screens for projects, favorites, library sources, automations, plugins, skills,
+preferences and memory call routes the FastAPI backend does not have yet. They work in
+the demo and show "not available on this server yet" against the real backend. The
+routes they need are in [docs/frontend-api-contract.md](../docs/frontend-api-contract.md).
 
 ## How it talks to the backend
 
@@ -106,7 +98,8 @@ backend's own message.
 - **Type.** Instrument Sans for the interface, Bricolage Grotesque for headings, Hind
   Siliguri for Bangla, JetBrains Mono for code.
 - **Keyboard.** Enter sends, Shift+Enter adds a line, Escape stops an answer,
-  Ctrl/Cmd+Shift+O starts a new chat, Ctrl/Cmd+Shift+S toggles the sidebar.
+  Ctrl/Cmd+K searches chats, Ctrl/Cmd+Shift+O starts a new chat, Ctrl/Cmd+Shift+S
+  toggles the sidebar, Ctrl/Cmd+Shift+, opens Settings.
 
 ## Conventions
 
@@ -130,4 +123,5 @@ These are visible in the app but need backend support first:
 - **Stopped answers.** Text from a stopped answer stays on screen but is not saved, so
   it is gone after a reload.
 - **Follow-up suggestions** under an answer, as Perplexity shows.
-- **File and image uploads** in the composer.
+- **Image and PDF uploads.** Text files already work: they travel inside the message.
+- Everything in [docs/frontend-api-contract.md](../docs/frontend-api-contract.md).

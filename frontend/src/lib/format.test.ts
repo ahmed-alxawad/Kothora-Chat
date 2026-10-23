@@ -32,7 +32,18 @@ describe("formatBdt and initials", () => {
 
 describe("router paths", () => {
   it("round-trips every route", () => {
-    for (const path of ["/", "/c/abc123", "/billing"]) {
+    for (const path of [
+      "/",
+      "/c/abc123",
+      "/billing",
+      "/projects",
+      "/p/x1",
+      "/library",
+      "/plugins",
+      "/skills",
+      "/automations",
+      "/code",
+    ]) {
       expect(routePath(parsePath(path))).toBe(path)
     }
   })

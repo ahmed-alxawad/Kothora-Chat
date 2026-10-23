@@ -1,4 +1,5 @@
-import { createResource, createSignal, For, Show } from "solid-js"
+import { createSignal, For, Show } from "solid-js"
+import { safeResource } from "../../lib/resource"
 import { api } from "../../lib/api"
 import { formatBdt } from "../../lib/format"
 import type { BillingCycle, Plan, Usage } from "../../lib/types"
@@ -23,7 +24,7 @@ const TEAM = ["business_basic", "business_premium", "enterprise"]
 const RECOMMENDED = "pro"
 
 export function PlansView(props: { usage: Usage | undefined; paymentResult: string | null }) {
-  const [plans] = createResource(api.plans)
+  const [plans] = safeResource(api.plans)
   const [cycle, setCycle] = createSignal<BillingCycle>("monthly")
   const [audience, setAudience] = createSignal<"individual" | "team">("individual")
   const [error, setError] = createSignal("")
