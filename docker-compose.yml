@@ -1,0 +1,56 @@
+# Single-server deployment matching the business document, Section 6.1.
+#   docker compose up -d                               # web, api, postgres, redis
+#   docker compose --profile local-models up -d        # + Ollama for Llama 3 / CodeLlama
+#   docker compose --profile search up -d              # + SearXNG for web search
+services:
+  web:
+    build: ./frontend
+    ports: ["80:80"]
+    depends_on: [api]
+    restart: unless-stopped
+
+  api:
+    build: ./backend
+    env_file: .env
+    environment:
+      KOTHORA_ENV: production
+      KOTHORA_DATABASE_URL: postgresql+asyncpg://kothora:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/kothora
+      KOTHORA_REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_started }
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: kothora
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: kothora
+    volumes: [postgres-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kothora"]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest  # pin a tested version before production
+    profiles: [local-models]
+    volumes: [ollama-data:/root/.ollama]
+    restart: unless-stopped
+
+  searxng:
+    image: searxng/searxng:latest  # pin a tested version before production
+    profiles: [search]
+    volumes: [./deploy/searxng:/etc/searxng]
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  ollama-data:

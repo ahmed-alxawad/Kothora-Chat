@@ -1,0 +1,7 @@
+# Minimal SearXNG config: enables the JSON API that Kothora calls.
+use_default_settings: true
+server:
+  secret_key: "replace-with-a-random-value"
+  limiter: false
+search:
+  formats: [html, json]
